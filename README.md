@@ -7,7 +7,7 @@ Projekt obejmuje testowanie funkcjonalne i wydajnościowe, a także automatyzacj
 
 Aby dogłębnie sprawdzić stabilność biblioteki, nasz system zakłada pobranie wybranego commita z oficjalnego repozytorium GitHub modułu, zbudowanie go lokalnie i przetestowanie go przy użyciu naszej pipeline.
 
-## Kanał komunikacji zespołu
+## Kanał komunikacji zespołu (TODO: dodac kiedy sie spotykamy, regularnie, poza tym moga byc zajecia)
 Codzienną komunikację i podział pracy będziemy wykonywać na serwerze Discord.
 
 ## Skład zespołu i podział ról
@@ -29,7 +29,7 @@ Ze względu na 4-osobowy skład zespołu i wysoki stopień skomplikowania proces
    - Odpowiedzialność: Organizacja dokumentacji projektu oraz struktury katalogów.
    - Główne wyzwanie: Opracowanie dokumentu zawierającego co najmniej 3 scenariusze testów akceptacyjnych (cel, rezultat, kryterium zaliczenia) oraz szczegółowe udokumentowanie procesu budowania modułu ze źródeł.
 
-## Harmonogram Projektu (ok. 2,5 miesiąca)
+## Harmonogram Projektu (ok. 2,5 miesiąca) (TODO: trzebac dodac ETA i DOD)
 Nasz projekt podzielony jest na etapy, zgodnie z punktami kontrolnymi:
 
 - Punkt kontrolny 1 (Organizacja projektu): Założenie repozytorium, stworzenie pliku README z opisem, zdefiniowanie ról w zespole, ustalenie kanałów komunikacji i zaplanowanie wstępnych scenariuszy testowych.
