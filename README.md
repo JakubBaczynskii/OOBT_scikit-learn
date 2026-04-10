@@ -29,7 +29,7 @@ Ze względu na 4-osobowy skład zespołu i wysoki stopień skomplikowania proces
    - Odpowiedzialność: Organizacja dokumentacji projektu oraz struktury katalogów.
    - Główne wyzwanie: Opracowanie dokumentu zawierającego co najmniej 3 scenariusze testów akceptacyjnych (cel, rezultat, kryterium zaliczenia) oraz szczegółowe udokumentowanie procesu budowania modułu ze źródeł.
 
-## Harmonogram Projektu (ok. 2,5 miesiąca) TODO: TRZEBA DODAC ETA I DOD
+## Harmonogram Projektu (ok. 2,5 miesiąca) (TODO: trzebac dodac ETA i DOD)
 Nasz projekt podzielony jest na etapy, zgodnie z punktami kontrolnymi:
 
 - Punkt kontrolny 1 (Organizacja projektu): Założenie repozytorium, stworzenie pliku README z opisem, zdefiniowanie ról w zespole, ustalenie kanałów komunikacji i zaplanowanie wstępnych scenariuszy testowych.
