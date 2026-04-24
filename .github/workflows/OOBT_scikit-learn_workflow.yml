@@ -29,15 +29,11 @@ jobs:
         pip install --upgrade pip setuptools wheel
         pip install meson meson-python numpy cython
 
-    - name: Install scikit-learn
-      run: |
-        cd scikit-learn
-        pip install -e .
-
     - name: Build scikit-learn from source
       run: |
         git clone https://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
+        pip install -e .
         pip install --verbose --no-build-isolation --editable .
 
     - name: Install test dependencies
