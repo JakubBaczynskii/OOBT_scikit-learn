@@ -20,27 +20,21 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install system build dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential gfortran python3-dev
-
-    - name: Install Python build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy scipy cython pytest
-
     - name: Install build dependencies
       run: |
-        pip install numpy scipy cython
+        sudo apt-get update
+        sudo apt-get install -y build-essential gfortran libopenblas-dev liblapack-dev
+        python -m pip install --upgrade pip
+        pip install numpy scipy cython setuptools wheel
 
     - name: Build scikit-learn from source
       run: |
-        git clone https://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
-        git checkout 646da0f
-        python -m pip install --upgrade pip setuptools wheel
-        python -m pip install -v .
+        pip install --verbose --no-build-isolation --editable .
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest
 
     - name: Run tests and save results
       run: |
