@@ -38,6 +38,7 @@ jobs:
       run: |
         git clone https://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
+        git checkout 646da0f
         python setup.py install
 
     - name: Run tests and save results
