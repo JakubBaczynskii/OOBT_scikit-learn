@@ -40,7 +40,7 @@ jobs:
       run: |
         mkdir test_run
         cd test_run
-        pytest --pyargs sklearn --tb=short --verbose > ../test_results.txt 2>&1 || true
+        pytest tests --tb=short --verbose > ../test_results.txt 2>&1 || true
 
     - name: Display test results
       if: always()
