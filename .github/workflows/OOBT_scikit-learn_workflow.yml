@@ -29,6 +29,7 @@ jobs:
 
     - name: Build scikit-learn from source
       run: |
+        git clone https://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
         pip install --verbose --no-build-isolation --editable .
 
