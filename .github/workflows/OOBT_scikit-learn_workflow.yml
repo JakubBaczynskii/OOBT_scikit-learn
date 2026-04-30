@@ -38,10 +38,8 @@ jobs:
 
     - name: Run tests and save results
       run: |
-        mkdir test_run
-        cd test_run
         pytest tests/functional --tb=short --verbose > ../test_results.txt 2>&1 || true
-        pytest tests/performance --tb=short --verbose > ../test_results.txt 2>&1 || true
+        pytest tests/performance --tb=short --verbose >> ../test_results.txt 2>&1 || true
 
     - name: Display test results
       if: always()
