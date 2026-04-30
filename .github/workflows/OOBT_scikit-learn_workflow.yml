@@ -38,15 +38,19 @@ jobs:
 
     - name: Run tests and save results
       run: |
-        pytest tests/functional --tb=short --verbose > ../test_results.txt 2>&1 || true
-        pytest tests/performance --tb=short --verbose >> ../test_results.txt 2>&1 || true
+        pytest tests/functional --tb=short --verbose > test_results.txt 2>&1 || true
+        pytest tests/performance --tb=short --verbose >> test_results.txt 2>&1 || true
 
     - name: Display test results
       if: always()
       run: |
         echo "## Test Results" >> $GITHUB_STEP_SUMMARY
         echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-        tail -n 20 test_results.txt >> $GITHUB_STEP_SUMMARY
+        if [ -f test_results.txt ]; then
+          tail -n 20 test_results.txt >> $GITHUB_STEP_SUMMARY
+        else
+          echo "Brak wyników testów" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload test results
