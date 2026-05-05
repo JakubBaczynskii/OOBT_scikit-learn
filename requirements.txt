@@ -1,2 +1,4 @@
 scikit-learn
 pytest
+numpy
+joblib
