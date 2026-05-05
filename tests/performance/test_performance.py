@@ -41,18 +41,17 @@ def test_performance_scaling():
     X_large, y_large = make_classification(n_samples=50000, n_features=20, random_state=42)
     model = RandomForestClassifier(n_estimators=100, n_jobs=-1, random_state=42)
 
-    # Pomiar Mały
+    # Pomiar mały
     t1 = time.perf_counter()
     model.fit(X_small, y_small)
     duration_small = time.perf_counter() - t1
 
-    # Pomiar Duży
+    # Pomiar duży
     t2 = time.perf_counter()
     model.fit(X_large, y_large)
     duration_large = time.perf_counter() - t2
 
     logger.info(f"Scaling factor: {duration_large / duration_small:.2f}x")
     
-    # Asercja: Duży zbiór (50x więcej danych) powinien zająć wyraźnie więcej czasu 
-    # niż mały, ale nie mniej niż on sam.
+    # Duży zbiór (50x więcej danych) powinien zająć wyraźnie więcej czasu niż mały, ale nie mniej niż on sam.
     assert duration_large > duration_small
