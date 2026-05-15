@@ -9,7 +9,19 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Python ${{ matrix.python-version }} on Ubuntu 24.04
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    env:
+      OS: ubuntu-24.04
+      ARCH: x86_64
+      OPENBLAS_VERSION: libopenblas-dev
+      LAPACK_VERSION: liblapack-dev
 
     steps:
     - name: Checkout repository
@@ -18,52 +30,106 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
+
+    - name: Display environment information
+      run: |
+        echo "# Environment Information" > environment.md
+        echo "" >> environment.md
+        echo "- OS: Ubuntu 24.04" >> environment.md
+        echo "- Architecture: $(uname -m)" >> environment.md
+        echo "- Python version: $(python --version)" >> environment.md
+        echo "- GCC version: $(gcc --version | head -n 1)" >> environment.md
+        echo "- GFortran version: $(gfortran --version | head -n 1)" >> environment.md
 
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential gfortran libopenblas-dev liblapack-dev
+        sudo apt-get install -y \
+          build-essential \
+          gfortran \
+          libopenblas-dev \
+          liblapack-dev
 
     - name: Install build dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest pytest-cov
+        python -m pip install --upgrade pip==25.0.1
+
+        pip install \
+          numpy==2.2.5 \
+          scipy==1.15.2 \
+          cython==3.0.12 \
+          meson-python==0.17.1 \
+          meson==1.7.0 \
+          ninja==1.11.1.4 \
+          setuptools==78.1.0 \
+          wheel==0.45.1 \
+          pytest==8.3.5 \
+          pytest-cov==6.1.1
 
     - name: Build scikit-learn from source
       run: |
         git clone --depth 1 https://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
-        pip install --verbose --no-build-isolation --editable .
+
+        pip install \
+          --verbose \
+          --no-build-isolation \
+          --editable .
 
     - name: Run tests with coverage
-      run: | 
-        pytest tests/ --cov=sklearn --cov-report=html > test_results.txt 2>&1
+      run: |
+        mkdir -p reports
 
-    - name: Display test results
+        pytest tests/ \
+          --cov=sklearn \
+          --cov-report=html \
+          --cov-report=term-missing \
+          > reports/test-report.md 2>&1
+
+    - name: Generate markdown summary
       if: always()
       run: |
-        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-        if [ -f test_results.txt ]; then
-          tail -n 20 test_results.txt >> $GITHUB_STEP_SUMMARY
-        else
-          echo "Brak wyników testów" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        {
+          echo "# CI Test Summary"
+          echo ""
+          echo "## Environment"
+          echo ""
+          cat environment.md
+          echo ""
+          echo "## Last 30 lines of test output"
+          echo ""
+          echo '```'
+          
+          if [ -f reports/test-report.md ]; then
+            tail -n 30 reports/test-report.md
+          else
+            echo "No test report generated"
+          fi
+          
+          echo '```'
+        } >> $GITHUB_STEP_SUMMARY
 
-    - name: Upload test results
+    - name: Upload test report
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results
-        path: test_results.txt
+        name: test-report-py${{ matrix.python-version }}
+        path: reports/test-report.md
         retention-days: 7
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: coverage-report
+        name: coverage-report-py${{ matrix.python-version }}
         path: htmlcov/
+        retention-days: 7
+
+    - name: Upload environment information
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: environment-py${{ matrix.python-version }}
+        path: environment.md
         retention-days: 7
