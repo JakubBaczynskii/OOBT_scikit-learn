@@ -73,9 +73,8 @@ jobs:
         pytest tests/ \
           --cov=sklearn \
           --cov-report=html \
-          --tb=short \
           --disable-warnings \
-          -q \
+          -v \
           --maxfail=0 \
           > reports/test_report.md 2>&1
         # Dodajemy nagłówek z listą wykonanych testów
