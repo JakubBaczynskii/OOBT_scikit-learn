@@ -69,31 +69,52 @@ jobs:
     - name: Run tests and save report in Markdown
       run: |
         mkdir -p reports
-        # Uruchamiamy pytest z zapisem szczegółowego outputu do pliku md
+    
+        echo "# Test Results" > reports/test_report_final.md
+        echo "" >> reports/test_report_final.md
+    
+        echo "## Executed tests" >> reports/test_report_final.md
+        echo "" >> reports/test_report_final.md
+    
+        # Uruchomienie testów z pełnym verbose
         pytest tests/ \
           --cov=sklearn \
           --cov-report=html \
           --disable-warnings \
           -v \
+          -rA \
           --maxfail=0 \
-          > reports/test_report.md 2>&1
-        # Dodajemy nagłówek z listą wykonanych testów
-        echo "# Test Results" | cat - reports/test_report.md > reports/test_report_final.md
-        # Wyciągamy listę testów, które się wykonały
+          2>&1 | tee reports/test_report.log
+    
         echo "" >> reports/test_report_final.md
-        echo "## Executed tests:" >> reports/test_report_final.md
-        pytest --collect-only -q tests/ | grep -v "::" >> reports/test_report_final.md
-
+        echo "## Detailed pytest output" >> reports/test_report_final.md
+        echo "" >> reports/test_report_final.md
+        echo '```' >> reports/test_report_final.md
+    
+        cat reports/test_report.log >> reports/test_report_final.md
+    
+        echo '```' >> reports/test_report_final.md
+    
+        echo "" >> reports/test_report_final.md
+        echo "## Collected tests" >> reports/test_report_final.md
+        echo "" >> reports/test_report_final.md
+    
+        pytest --collect-only -q tests/ >> reports/test_report_final.md
+    
     - name: Display test results in summary
       if: always()
       run: |
-        if [ -f reports/test_report_final.md ]; then
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo '```markdown' >> $GITHUB_STEP_SUMMARY
-          tail -n 40 reports/test_report_final.md >> $GITHUB_STEP_SUMMARY
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+    
+        if [ -f reports/test_report.log ]; then
+          echo '```' >> $GITHUB_STEP_SUMMARY
+    
+          # pokaż ostatnie 100 linii aby było widać wykonane testy
+          tail -n 100 reports/test_report.log >> $GITHUB_STEP_SUMMARY
+    
           echo '```' >> $GITHUB_STEP_SUMMARY
         else
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
           echo "No test report found" >> $GITHUB_STEP_SUMMARY
         fi
 
