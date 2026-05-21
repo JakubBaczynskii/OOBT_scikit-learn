@@ -23,3 +23,10 @@ def test_pipeline_integration():
         ('scaler', StandardScaler()),
         ('classifier', LogisticRegression(random_state=42))
     ])
+
+    # 3. ACT: Trenowanie i predykcja
+    # .fit() najpierw skaluje X_train, a potem trenuje na nim model
+    pipeline.fit(X_train, y_train)
+    
+    # .predict() automatycznie używa wytrenowanego scalera na nowym X_test
+    predictions = pipeline.predict(X_test)
