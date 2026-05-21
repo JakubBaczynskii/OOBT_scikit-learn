@@ -29,7 +29,8 @@ def test_kmeans_clustering_performance():
     
     # 3. ASSERT: Weryfikacja działania modelu
     # Sprawdzamy, czy model wygenerował dokładnie 3 centra klastrów, a każdy ma 2 współrzędne (X, Y)
-    assert model.cluster_centers_.shape == (3, 2), "Model nie utworzył poprawnych centrów klastrów."
+    assert model.cluster_centers_.shape == (3, 2), (
+    f"Błąd! Oczekiwano wymiarów (3, 2), a model wygenerował: {model.cluster_centers_.shape}")
     
     # Obliczamy jakość klastryzacji za pomocą silhouette_score
     # Wynik z przedziału od -1 do 1. Im bliżej 1, tym klastry są lepiej odseparowane od siebie.
@@ -37,3 +38,4 @@ def test_kmeans_clustering_performance():
     
     # Oczekujemy, że przy tak prostych danych (make_blobs), wynik będzie wysoki (znacznie powyżej 0)
     assert score > 0.5, f"Silhouette score jest zbyt niski: {score}. Klastry są słabo rozdzielone."
+    
