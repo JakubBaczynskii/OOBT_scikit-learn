@@ -21,9 +21,22 @@
 | **Pipeline** | `test_pipeline.py` | Budowa potoku przetwarzania | StandardScaler + SVC | DONE |
 | **Persystencja** | `test_model_persistence.py` | Zapis/Odczyt modelu | LogisticRegression + joblib | DONE |
 
-### **Testy Wydajnościowe** (1-2 testy do implementacji)
-- Plik: `tests/performance/test.py`
-- Odpowiedzialność: [Emilia Wierzbanowska](https://github.com/emiliaw1)(Performance QA)
+| **Clustering** | `test_clustering.py` | Grupowanie danych | KMeans na zbiorze | DONE |
+| **Regresja** | `test_regression.py` | Modelowanie regresji | RandomForest + Linear Regression + Baseline | DONE |
+| **Edge Cases** | `test_edge_cases.py` | Testy graniczne | Puste dane, invalid inputs | DONE |
+| **Pipeline Integration** | `test_pipeline_integration.py` | Integracja pełnego pipeline'a | Wieloetapowy workflow | DONE |
+
+### **Testy Wydajnościowe** (5 testów zaimplementowanych)
+
+| Test | Plik | Cel | Scenariusz | Status |
+|------|------|-----|-----------|--------|
+| **Performance Scaling** | `test_performance.py` | Skalowanie na rozmiarach danych | 1000 vs 50000 próbek | DONE |
+| **Performance Large Dataset** | `test_performance.py` | Wydajność na dużych danych | 50000 próbek, 100 estimators | DONE |
+| **Performance Scaling Factor** | `test_performance.py` | Porównanie czasu scaling | Wzrost czasu z rozmiarem danych | DONE |
+| **Parallelization** | `test_multiprocessing.py` | Testowanie wielowątkowości | n_jobs=1 vs n_jobs=-1 | DONE |
+| **Sparse Performance** | `test_sparse_performance.py` | Wydajność na macierzach rzadkich | SGDClassifier na sparse matrices | DONE |
+
+**Odpowiedzialność:** [Emilia Wierzbanowska](https://github.com/emiliaw1) (Performance QA)
 
 ---
 
@@ -706,18 +719,37 @@ Brak kompilacji rozszerzeń C/C++
 
 ---
 
-### **Problem 5: Brak testów wydajnościowych**
+### **Problem 5: Brakujące testy wydajnościowe** FIXED
 
-**Plik:** `tests/performance/test.py` (pusty)
+**Plik:** `tests/performance/` - **ZAWIERA 5 TESTÓW**
 
 **Odpowiedzialność:** [Emilia Wierzbanowska](https://github.com/emiliaw1) (Performance QA)  
-**Stan:** AWAITING IMPLEMENTATION
 
-**Oczekiwane:**
-- 1-2 testy mierzące wydajność
-- Porównanie czasu wykonania na różnych rozmiarach danych
-- Logowanie wyników
-- Integracja z workflow (już gotowa w Kroku 8)
+**Stan:** IMPLEMENTACJA ZAKOŃCZONA
+
+**Zaimplementowane testy:**
+
+1. **`test_performance.py`** (3 testy):
+   - `test_fit_performance_small_dataset()` - Trening na 1000 próbkach
+   - `test_fit_performance_large_dataset()` - Trening na 50000 próbkach
+   - `test_performance_scaling()` - Porównanie scaling factor
+
+2. **`test_multiprocessing.py`** (1 test):
+   - `test_random_forest_parallelization()` - n_jobs=1 vs n_jobs=-1, duży zbiór 100K próbek
+
+3. **`test_sparse_performance.py`** (1 test):
+   - `test_sparse_performance()` - Dense vs Sparse matrices, SGDClassifier
+
+**Metryki mierzone:**
+- ✅ Czas treningu (time.perf_counter(), time.time())
+- ✅ Przyspieszenie równoległe (speedup factor)
+- ✅ Wydajność na macierzach rzadkich
+
+**Integracja z workflow:**
+- ✅ Testy uruchamiają się w Kroku 8 (pytest tests/)
+- ✅ Wyniki logują się do reports/test_report.log
+- ✅ Coverage mierzy się dla wszystkich testów
+- ✅ Artefakty uploadują się do GitHub (Kroki 11-13)
 
 ---
 
@@ -831,12 +863,25 @@ Gdy inżynierowie QA będą commitować PR-y z testami, sprawdzać:
 
 ## Przeznaczenie Każdego Pliku Testów
 
+### **Testy Funkcjonalne**
+
 | Plik | Autor | Cel | Wymagania | Status |
 |------|-------|-----|----------|--------|
 | `test_classification.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Rzeczywisty use-case klasyfikacji | sklearn datasets, RandomForest | READY |
 | `test_pipeline.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Weryfikacja klasy Pipeline | sklearn preprocessing, SVC | READY |
 | `test_model_persistence.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Zapis/odczyt modelu | joblib, LogisticRegression | READY |
-| `test.py` (performance) | [Emilia](https://github.com/emiliaw1) (Performance QA) | Benchmarking wydajności | pomiary czasu, duże zbiory danych | AWAITING IMPLEMENTATION |
+| `test_clustering.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Testowanie KMeans | KMeans clustering | READY |
+| `test_regression.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Regresja + baseline | RandomForest, Linear, Dummy | READY |
+| `test_edge_cases.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Testy graniczne | Invalid inputs, edge cases | READY |
+| `test_pipeline_integration.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Integracja end-to-end | Multi-step pipeline | READY |
+
+### **Testy Wydajnościowe**
+
+| Plik | Autor | Cel | Metryki | Status |
+|------|-------|-----|---------|--------|
+| `test_performance.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Scaling performance | Training time, scaling factor | DONE |
+| `test_multiprocessing.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Parallelization speedup | n_jobs effect, speedup factor | DONE |
+| `test_sparse_performance.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Dense vs Sparse | Training time comparison | DONE |
 
 ---
 
@@ -854,9 +899,15 @@ OOBT_scikit-learn/
 │   ├── functional/
 │   │   ├── test_classification.py              # READY
 │   │   ├── test_pipeline.py                    # READY
-│   │   └── test_model_persistence.py           # READY
+│   │   ├── test_model_persistence.py           # READY
+│   │   ├── test_clustering.py                  # READY
+│   │   ├── test_regression.py                  # READY
+│   │   ├── test_edge_cases.py                  # READY
+│   │   └── test_pipeline_integration.py        # READY
 │   └── performance/
-│       └── test.py                             # AWAITING IMPLEMENTATION
+│       ├── test_performance.py                 # DONE
+│       ├── test_multiprocessing.py             # DONE
+│       └── test_sparse_performance.py          # DONE
 ├── reports/
 │   ├── test_report_final.md                    # Sformatowany Markdown report
 │   └── test_report.log                         # Raw pytest output
@@ -944,6 +995,12 @@ cat reports/test_report.log
 - [x] Dodać Problem 8 (workflow zawsze się powiedzie - FIXED)
 - [x] Oznaczyć Status dla każdego problemu
 
+### **Task 1.5: Aktualizacja Testów Wydajnościowych** ✅
+- [x] Zaktualizować tabelę testów funkcjonalnych (7 testów)
+- [x] Zaktualizować tabelę testów wydajnościowych (5 testów)
+- [x] Oznaczyć Problem 5 jako FIXED
+- [x] Dodać szczegóły implementacji wydajności
+
 ---
 
 ## Status Problemów (Summary)
@@ -954,7 +1011,7 @@ cat reports/test_report.log
 | 2 | System deps | CRITICAL | FIXED | ✅ |
 | 3 | Build tools | CRITICAL | FIXED | ✅ |
 | 4 | Build source | CRITICAL | FIXED | ✅ |
-| 5 | Performance testy | AWAITING | AWAITING | - |
+| 5 | Performance testy | AWAITING | FIXED  | ✅ |
 | 6 | Timeout build | OPTIONAL | MONITORING | - |
 | 7 | Brak pokrycia | CRITICAL | FIXED | ✅ |
 | 8 | Workflow zawsze OK | CRITICAL | FIXED | ✅ |
@@ -963,14 +1020,15 @@ cat reports/test_report.log
 
 ## Kolejne Kroki
 
-### **Milestone 2 (Teraz - Do 2026-05-21)**
+### **Milestone 2 (Teraz - Do 2026-05-21)** COMPLETE
 1. ✅ Workflow zaktualizowany - matrix testing na 4 wersjach Pythona
 2. ✅ Coverage reporting włączony
 3. ✅ Dokumentacja pełna - 13 kroków szczegółowo opisanych
 4. ✅ Strict mode - workflow zawiedzie jeśli testy zawiodą
+5. ✅ Testy wydajnościowe zaimplementowane (5 testów)
 
-### **Milestone 3 (2026-05-21 - 2026-05-29)**
-1. ⏳ [Emilia](https://github.com/emiliaw1) implementuje testy wydajnościowe
+### **Milestone 3 (2026-05-21 - 2026-05-29)** 🟢 IN PROGRESS
+1. ✅ Emilia implementuje testy wydajnościowe - DONE
 2. ⏳ Monitorować workflow - szukaj błędów na różnych wersjach Pythona
 3. ⏳ Optymizować czas buildowania
 4. ⏳ Obserwować ci-pipeline i dokumentować problemy
@@ -1001,10 +1059,10 @@ cat reports/test_report.log
 - ✅ Meson build system
 
 ### **Krok 8: Testowanie (EXPANDED)**
-- ✅ Functional tests ([Jakub](https://github.com/JakubBaczynskii) - gotowe)
+- ✅ Functional tests (7 testów - [Jakub](https://github.com/JakubBaczynskii) - DONE)
+- ✅ Performance tests (5 testów - [Emilia](https://github.com/emiliaw1) - DONE)
 - ✅ Coverage reporting (htmlcov/)
 - ✅ Structured markdown reports
-- ⏳ Performance tests ([Emilia](https://github.com/emiliaw1) - czeka)
 
 ### **Kroki 9-13: Raportowanie (EXPANDED)**
 - ✅ Display wyników (GitHub UI - 100 linii)
@@ -1015,11 +1073,11 @@ cat reports/test_report.log
 
 ---
 
-**Dokument zaktualizowany:** 2026-05-21  
-**Ostatnia aktualizacja:** Zaktualizowanie całej dokumentacji do nowego workflow  
-**Status:** Complete - Workflow zaktualizowany, dokumentacja zsynchronizowana  
+**Dokument zaktualizowany:** 2026-05-21 (Update 2)  
+**Ostatnia aktualizacja:** Aktualizacja tabel testów wydajnościowych i Problem 5  
+**Status:** Complete - Testy wydajnościowe zaktualizowane i udokumentowane  
 **Autor:** [Mykola Mashovets](https://github.com/MykMash)  
-**Wersja:** 2.0 (Matrix Testing + Coverage + Comprehensive Reporting)
+**Wersja:** 2.1 (Performance Tests Implementation Complete)
 
 **Dokument stworzony:** 2026-04-30  
 **Ostatnia zmiana:** 2026-05-21  
