@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 def test_pipeline_integration():
     """
@@ -30,3 +31,9 @@ def test_pipeline_integration():
     
     # .predict() automatycznie używa wytrenowanego scalera na nowym X_test
     predictions = pipeline.predict(X_test)
+
+    # 4. ASSERT: Weryfikacja jakości
+    accuracy = accuracy_score(y_test, predictions)
+    
+    # Model połączony ze scalerem na tym zbiorze spokojnie osiąga ponad 95%
+    assert accuracy > 0.95, f"Dokładność Pipeline'u jest zbyt niska: {accuracy}"
