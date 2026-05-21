@@ -140,8 +140,8 @@ jobs:
           echo ""
           echo '```'
           
-          if [ -f reports/test-report.md ]; then
-            tail -n 30 reports/test-report.md
+          if [ -f reports/test_report_final.md ]; then
+            tail -n 30 reports/test_report_final.md
           else
             echo "No test report generated"
           fi
@@ -153,8 +153,8 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-report-py${{ matrix.python-version }}
-        path: reports/test-report.md
+        name: test_report_final-py${{ matrix.python-version }}
+        path: reports/test_report_final.md
         retention-days: 7
 
     - name: Upload coverage report
