@@ -21,9 +21,22 @@
 | **Pipeline** | `test_pipeline.py` | Budowa potoku przetwarzania | StandardScaler + SVC | DONE |
 | **Persystencja** | `test_model_persistence.py` | Zapis/Odczyt modelu | LogisticRegression + joblib | DONE |
 
-### **Testy Wydajnościowe** (1-2 testy do implementacji)
-- Plik: `tests/performance/test.py`
-- Odpowiedzialność: [Emilia Wierzbanowska](https://github.com/emiliaw1)(Performance QA)
+| **Clustering** | `test_clustering.py` | Grupowanie danych | KMeans na zbiorze | DONE |
+| **Regresja** | `test_regression.py` | Modelowanie regresji | RandomForest + Linear Regression + Baseline | DONE |
+| **Edge Cases** | `test_edge_cases.py` | Testy graniczne | Puste dane, invalid inputs | DONE |
+| **Pipeline Integration** | `test_pipeline_integration.py` | Integracja pełnego pipeline'a | Wieloetapowy workflow | DONE |
+
+### **Testy Wydajnościowe** (5 testów zaimplementowanych)
+
+| Test | Plik | Cel | Scenariusz | Status |
+|------|------|-----|-----------|--------|
+| **Performance Scaling** | `test_performance.py` | Skalowanie na rozmiarach danych | 1000 vs 50000 próbek | DONE |
+| **Performance Large Dataset** | `test_performance.py` | Wydajność na dużych danych | 50000 próbek, 100 estimators | DONE |
+| **Performance Scaling Factor** | `test_performance.py` | Porównanie czasu scaling | Wzrost czasu z rozmiarem danych | DONE |
+| **Parallelization** | `test_multiprocessing.py` | Testowanie wielowątkowości | n_jobs=1 vs n_jobs=-1 | DONE |
+| **Sparse Performance** | `test_sparse_performance.py` | Wydajność na macierzach rzadkich | SGDClassifier na sparse matrices | DONE |
+
+**Odpowiedzialność:** [Emilia Wierzbanowska](https://github.com/emiliaw1) (Performance QA)
 
 ---
 
@@ -60,7 +73,7 @@ pytest                         # Framework do testów
 ### **Python Dependencies - Build Tools**
 
 ```bash
-pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest
+pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest pytest-cov
 ```
 
 | Pakiet | Wersja | Cel |
@@ -74,6 +87,7 @@ pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest
 | **setuptools** | LATEST | Narzędzie pakowania |
 | **wheel** | LATEST | Format pakietów binarnych |
 | **pytest** | LATEST | Framework do testów |
+| **pytest-cov** | LATEST | Coverage plugin dla pytest (nowy) |
 
 ---
 
@@ -96,7 +110,7 @@ from sklearn.metrics import accuracy_score               # Metryka
 | `accuracy_score` | Metryka | Ocena dokładności | YES | Pure Python |
 
 **Wymagania do budowania:**
-- ✅ Python 3.12+ (scikit-learn 1.4+)
+- ✅ Python 3.11+ (scikit-learn 1.4+)
 - ✅ Kompilatory C/C++ (RandomForest ma OptimizedTree w C++)
 - ✅ NumPy (zależność scikit-learn)
 - ✅ SciPy (zależność scikit-learn)
@@ -125,7 +139,7 @@ from sklearn.datasets import make_classification          # Syntetyczne dane
 - ✅ BLAS/LAPACK (operacje na macierzach)
 - ✅ Cython (kompilacja rozszerzeń)
 - ⚠️ **KRYTYCZNE:** SVC jest najbardziej wymagającym modelem w scikit-learn
-- 
+
 ---
 
 ### **Test 3: Trwałość (`test_model_persistence.py`)**
@@ -187,13 +201,13 @@ on:
 
 ---
 
-### **Krok 2: Set up Python (Konfiguracja Python)**
+### **Krok 2: Set up Python (Konfiguracja Python - ZMIENIONY KROK!)**
 
 ```yaml
 - name: Set up Python
   uses: actions/setup-python@v5
   with:
-    python-version: '3.12'
+    python-version: ${{ matrix.python-version }}
 ```
 
 | Element | Opis |
@@ -201,18 +215,79 @@ on:
 | `uses: actions/setup-python@v5` | Oficjalna GitHub akcja do ustawienia Python |
 | `@v5` | Wersja akcji |
 | `with:` | Parametry konfiguracji |
-| `python-version: '3.12'` | Wersja Python do zainstalowania |
+| `python-version: ${{ matrix.python-version }}` | Wersja Python z matrix strategy |
 
-**Zalecenie:** Rozważyć multi-version testing w przyszłości:
+**Nowe: Matrix Testing Strategy** (ZMIANA!)
+
 ```yaml
 strategy:
+  fail-fast: false
   matrix:
-    python-version: ['3.11', '3.12', '3.13']
+    python-version: ["3.11", "3.12", "3.13", "3.14"]
 ```
+
+**Zalecenie:** Workflow testuje na **4 wersjach Pythona** jednocześnie:
+- ✅ Python 3.11
+- ✅ Python 3.12
+- ✅ Python 3.13
+- ✅ Python 3.14 (obsługiwany w najnowszych wersjach setup-python)
+
+**Znaczenie:** 
+- Gwarantuje kompatybilność na różnych wersjach
+- `fail-fast: false` oznacza że wszystkie wersje są testowane niezależnie
+- Jeśli jedna wersja zawiedzie, inne dalej się testują
 
 ---
 
-### **Krok 3: Install System Dependencies (Instalacja zależności systemowych)**
+### **Krok 3: Environment Variables (NOWY KROK!)**
+
+```yaml
+env:
+  OS: ubuntu-24.04
+  ARCH: x86_64
+  OPENBLAS_VERSION: libopenblas-dev
+  LAPACK_VERSION: liblapack-dev
+```
+
+**Nowe: Zmienne środowiskowe** (ZMIANA!)
+
+| Zmienna | Wartość | Cel |
+|---------|---------|-----|
+| `OS` | `ubuntu-24.04` | Identyfikacja systemu operacyjnego |
+| `ARCH` | `x86_64` | Architektura procesora |
+| `OPENBLAS_VERSION` | `libopenblas-dev` | Wersja biblioteki OpenBLAS |
+| `LAPACK_VERSION` | `liblapack-dev` | Wersja biblioteki LAPACK |
+
+**Znaczenie:** Pozwala na łatwe aktualizowanie wersji zależności w jednym miejscu.
+
+---
+
+### **Krok 4: Display environment information (NOWY KROK!)**
+
+```yaml
+- name: Display environment information
+  run: |
+    echo "# Environment Information" > environment.md
+    echo "" >> environment.md
+    echo "- OS: Ubuntu 24.04" >> environment.md
+    echo "- Architecture: $(uname -m)" >> environment.md
+    echo "- Python version: $(python --version)" >> environment.md
+    echo "- GCC version: $(gcc --version | head -n 1)" >> environment.md
+    echo "- GFortran version: $(gfortran --version | head -n 1)" >> environment.md
+```
+
+**Nowy krok generuje plik `environment.md`** z informacjami o środowisku:
+- OS
+- Architektura
+- Wersja Pythona
+- Wersja GCC
+- Wersja GFortrana
+
+**Cel:** Ułatwia debugging - każdy run ma dokumentację środowiska.
+
+---
+
+### **Krok 5: Install system dependencies (Instalacja zależności systemowych)**
 
 ```yaml
 - name: Install system dependencies
@@ -240,13 +315,13 @@ strategy:
 
 ---
 
-### **Krok 4: Install Build Dependencies (Instalacja build tools)**
+### **Krok 6: Install build dependencies (Instalacja build tools - ZMIENIONY!)**
 
 ```yaml
-- name: Install build dependencies
-  run: |
-    python -m pip install --upgrade pip
-    pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest
+- name: Install build dependencies 
+  run: | 
+    python -m pip install --upgrade pip 
+    pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest pytest-cov
 ```
 
 | Linia | Opis |
@@ -262,9 +337,15 @@ strategy:
 | `setuptools` | Tradycyjne narzędzie pakowania |
 | `wheel` | Format pakietów binarnych |
 | `pytest` | Framework do uruchamiania testów |
+| `pytest-cov` | **NOWY** - Coverage reporting dla pytest |
+
+**Nowy pakiet: pytest-cov** (ZMIANA!)
+- Generuje raporty pokrycia kodu (coverage reports)
+- Integruje się z pytest
+- Pozwala na HTML reports (htmlcov/)
 
 **Dlaczego to jest ważne:**
-- `pip upgrade`jest wymagane do poprawnej instalacji
+- `pip upgrade` jest wymagane do poprawnej instalacji
 - `numpy` - zależność dla scikit-learn
 - `scipy` - zależność dla scikit-learn
 - `cython` jest wymagany do budowania scikit-learn
@@ -274,19 +355,24 @@ strategy:
 - `setuptools` - legacy wsparcie
 - `wheel` - format binarny
 - `pytest` - uruchamianie testów
+- `pytest-cov` - pokrycie testów (nowy)
 
 **Znaczenie:** To są kluczowe narzędzia do budowania scikit-learn ze źródeł.
 
 ---
 
-### **Krok 5: Build scikit-learn from source (Budowanie ze źródeł)**
+### **Krok 7: Build scikit-learn from source (Budowanie ze źródeł)**
 
 ```yaml
 - name: Build scikit-learn from source
   run: |
     git clone --depth 1 https://github.com/scikit-learn/scikit-learn.git
     cd scikit-learn
-    pip install --verbose --no-build-isolation --editable .
+
+    pip install \
+      --verbose \
+      --no-build-isolation \
+      --editable .
 ```
 
 | Linia | Opis |
@@ -316,93 +402,215 @@ ImportError: libopenblas.so.0: cannot open shared object
 ```
 
 **Rozwiązania:**
-- ✅ System dependencies (Krok 3) - już dodane!
-- ✅ Build dependencies (Krok 4) - już dodane!
+- ✅ System dependencies (Krok 5) - już dodane!
+- ✅ Build dependencies (Krok 6) - już dodane!
 - Sprawdzić połączenie (clone z GitHub)
-
-### **Krok 6: Run Tests and Save Results (Uruchamianie i zapisanie testów)**
-
-```yaml
-- name: Run tests and save results
-      run: |
-        pytest tests/functional --tb=short --verbose > test_results.txt 2>&1 || true
-        pytest tests/performance --tb=short --verbose >> test_results.txt 2>&1 || true
-```
-
-**Analiza:**
-
-| Linia | Opis |
-|---------|------|
-| `pytest tests/functional --tb=short --verbose` | Uruchom testy funkcjonalne z krótkim traceback |
-| `> test_results.txt` | Przekieruj output do pliku (nadpisz jeśli istnieje) |
-| `>> test_results.txt` | Dołącz output do pliku (append dla performance testów) |
-| `2>&1` | Łącz stderr (błędy) z stdout (normalny output) |
-| `\|\| true` | Workflow się powiedzie zawsze |
-
-**UWAGA:**
-
-`|| true` oznacza że workflow **zawsze się powiedzie** nawet jeśli testy zawiodą, co pozwala na uniknięcie wyświetlania się błędów powiązanych z biblioteką
 
 ---
 
-### **Krok 7: Display Test Results (Wyświetlanie wyników)**
+### **Krok 8: Run tests and save report in Markdown (ZMIENIONY KROK!)**
 
 ```yaml
-- name: Display test results
+- name: Run tests and save report in Markdown
+  run: |
+    mkdir -p reports
+    
+    echo "# Test Results" > reports/test_report_final.md
+    echo "" >> reports/test_report_final.md
+    
+    echo "## Executed tests" >> reports/test_report_final.md
+    echo "" >> reports/test_report_final.md
+    
+    # Uruchomienie testów z pełnym verbose
+    pytest tests/ \
+      --cov=sklearn \
+      --cov-report=html \
+      --disable-warnings \
+      -v \
+      -rA \
+      --maxfail=0 \
+      2>&1 | tee reports/test_report.log
+    
+    echo "" >> reports/test_report_final.md
+    echo "## Detailed pytest output" >> reports/test_report_final.md
+    echo "" >> reports/test_report_final.md
+    echo '```' >> reports/test_report_final.md
+    
+    cat reports/test_report.log >> reports/test_report_final.md
+    
+    echo '```' >> reports/test_report_final.md
+    
+    echo "" >> reports/test_report_final.md
+    echo "## Collected tests" >> reports/test_report_final.md
+    echo "" >> reports/test_report_final.md
+    
+    pytest --collect-only -q tests/ >> reports/test_report_final.md
+```
+
+**ZNACZĄCE ZMIANY W TEŚCIE:**
+
+| Stary kod | Nowy kod | Zmiana |
+|-----------|----------|--------|
+| `pytest tests/functional --tb=short` | `pytest tests/ --cov=sklearn --cov-report=html` | **Coverage reporting** |
+| `> test_results.txt` | `2>&1 \| tee reports/test_report.log` | **Lepsze logowanie** |
+| `pytest tests/performance` | `--disable-warnings -v -rA` | **Pełna diagnostyka** |
+| `\|\| true` | Brak (workflow zawiedzie) | **Strict mode** |
+
+**Nowe parametry pytest:**
+
+| Parametr | Cel |
+|----------|-----|
+| `--cov=sklearn` | Mierzy pokrycie kodu dla modułu sklearn |
+| `--cov-report=html` | Generuje HTML report pokrycia |
+| `--disable-warnings` | Ukrywa ostrzeżenia (czytelnie) |
+| `-v` | Verbose mode (szczegóły każdego testu) |
+| `-rA` | Report all (summary wszystkich testów) |
+| `--maxfail=0` | Uruchomij wszystkie testy (nie zatrzymuj się na błędzie) |
+| `2>&1 \| tee` | Zapisz output do pliku i wyświetl na ekranie |
+
+**Wyniki:**
+- ✅ `reports/test_report.log` - raw output testów
+- ✅ `reports/test_report_final.md` - sformatowany raport Markdown
+- ✅ `htmlcov/` - HTML coverage report
+
+---
+
+### **Krok 9: Display test results in summary (ZMIENIONY KROK!)**
+
+```yaml
+- name: Display test results in summary
   if: always()
   run: |
     echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-    echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-    if [ -f test_results.txt ]; then
-      tail -n 20 test_results.txt >> $GITHUB_STEP_SUMMARY
+    echo "" >> $GITHUB_STEP_SUMMARY
+    
+    if [ -f reports/test_report.log ]; then
+      echo '```' >> $GITHUB_STEP_SUMMARY
+    
+      # pokaż ostatnie 100 linii aby było widać wykonane testy
+      tail -n 100 reports/test_report.log >> $GITHUB_STEP_SUMMARY
+    
+      echo '```' >> $GITHUB_STEP_SUMMARY
     else
-      echo "Brak wyników testów" >> $GITHUB_STEP_SUMMARY
+      echo "No test report found" >> $GITHUB_STEP_SUMMARY
     fi
-    echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 ```
 
-**Analiza:**
-
-| Linia | Opis |
-|-------|------|
-| `if: always()` | Uruchamia się zawsze (nawet gdy poprzednie kroki są nieudane) |
-| `echo "## Test Results"` | Nagłówek w Markdown |
-| `echo "\`\`\`"` | Otwarcie kodu bloku |
-| `if [ -f test_results.txt ]` | Sprawdzenie czy plik istnieje |
-| `tail -n 20 test_results.txt` | Wyświetl ostatnie 20 linii pliku |
-| `else echo "Brak wyników testów"` | Fallback - jeśli plik nie istnieje |
-| `echo "\`\`\`"` | Zamknięcie kodu bloku |
-
-**Rezultat:** Wyniki pojawią się w GitHub Actions UI
+**Zmiana:** Wyświetla ostatnie 100 linii (zamiast 20) + komentarz wyjaśniający
 
 ---
 
-### **Krok 8: Upload Test Results (Upload wyników)**
+### **Krok 10: Generate markdown summary (NOWY KROK!)**
 
 ```yaml
-- name: Upload test results
+- name: Generate markdown summary
+  if: always()
+  run: |
+    {
+      echo "# CI Test Summary"
+      echo ""
+      echo "## Environment"
+      echo ""
+      cat environment.md
+      echo ""
+      echo "## Last 30 lines of test output"
+      echo ""
+      echo '```'
+      
+      if [ -f reports/test_report_final.md ]; then
+        tail -n 30 reports/test_report_final.md
+      else
+        echo "No test report generated"
+      fi
+      
+      echo '```'
+    } >> $GITHUB_STEP_SUMMARY
+```
+
+**Nowy krok łączy wszystko w jednym podsumowaniu:**
+- Informacje o środowisku
+- Ostatnie linie testów
+- Sformatowany output
+
+---
+
+### **Krok 11: Upload test report (per-version - NOWY KROK!)**
+
+```yaml
+- name: Upload test report
   uses: actions/upload-artifact@v4
   if: always()
   with:
-    name: test-results
-    path: test_results.txt
+    name: test_report_final-py${{ matrix.python-version }}
+    path: reports/test_report_final.md
     retention-days: 7
 ```
 
-**Analiza:**
+**Nowy krok:** Upload per-Python-version
+- Nazwa artefaktu zawiera wersję Pythona
+- Pozwala porównywać wyniki między wersjami
 
-| Linia | Opis |
-|-------|------|
-| `- name: Upload test results` | Nazwa wyświetlana w GitHub UI |
-| `uses: actions/upload-artifact@v4` | Oficjalna GitHub akcja do uploadu artefaktów |
-| `@v4` | Wersja akcji (v4 - stabilna i rekomendowana) |
-| `if: always()` | Uruchamia się zawsze (nawet gdy poprzednie kroki są nieudane) |
-| `with:` | Sekcja parametrów konfiguracji dla akcji |
-| `name: test-results` | Nazwa artefaktu (widoczna w GitHub UI) |
-| `path: test_results.txt` | Ścieżka do pliku do uploadu |
-| `retention-days: 7` | Przechowuj plik przez 7 dni (potem automatycznie usuń) |
+---
 
-**Rezultat:** Wyniki testów będą dostępne do pobrania z GitHub Actions przez 7 dni
+### **Krok 12: Upload coverage report (NOWY KROK!)**
+
+```yaml
+- name: Upload coverage report
+  uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: coverage-report-py${{ matrix.python-version }}
+    path: htmlcov/
+    retention-days: 7
+```
+
+**Nowy krok:** Upload HTML coverage report
+- Zawiera dokładną analizę pokrycia kodu
+- Można przeglądać w przeglądarce
+
+---
+
+### **Krok 13: Upload environment information (NOWY KROK!)**
+
+```yaml
+- name: Upload environment information
+  uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: environment-py${{ matrix.python-version }}
+    path: environment.md
+    retention-days: 7
+```
+
+**Nowy krok:** Upload informacji o środowisku
+- Zawiera wersje kompilatora, OS, etc.
+- Ułatwia debugging problemów środowiskowych
+
+---
+
+## Podsumowanie Zmian
+
+### **DODANE (NEW)**
+- ✅ Matrix testing na 4 wersjach Pythona
+- ✅ Environment variables (OS, ARCH, OPENBLAS_VERSION, LAPACK_VERSION)
+- ✅ Krok Display environment information
+- ✅ pytest-cov dla coverage reporting
+- ✅ Coverage HTML reports (htmlcov/)
+- ✅ Markdown test reports
+- ✅ Per-version artefakty
+- ✅ Comprehensive summary generation
+
+### **ZMIENIONE (MODIFIED)**
+- 🔄 Workflow z `python-version: '3.12'` na `matrix.python-version`
+- 🔄 Build dependencies z dodanym `pytest-cov`
+- 🔄 Test execution z `--cov` i `--cov-report=html`
+- 🔄 Usunięte `|| true` (strict mode)
+- 🔄 Ulepszone logowanie (tee + multiple reports)
+
+### **USUNIĘTE (REMOVED)**
+- ❌ `|| true` przy testach (teraz workflow zawiedzie jeśli testy zawiodą)
+- ❌ Proste `test_results.txt` (zastąpione strukturyzowanymi raportami)
+- ❌ Jeden upload artefaktu (teraz 3+ uploady per version)
 
 ---
 
@@ -412,10 +620,12 @@ ImportError: libopenblas.so.0: cannot open shared object
 
 ```diff
 - python-version: '3.14'
-+ python-version: '3.12'
++ strategy:
++   matrix:
++     python-version: ["3.11", "3.12", "3.13", "3.14"]
 ```
 
-**Stan:** FIXED w obecnym workflow
+**Stan:** FIXED - matrix testing na wszystkich wersjach
 
 ---
 
@@ -437,7 +647,7 @@ ImportError: DLL load failed - SVM not found
     sudo apt-get install -y build-essential gfortran libopenblas-dev liblapack-dev
 ```
 
-**Status:** FIXED w Kroku 3
+**Status:** FIXED w Kroku 5
 
 **Zainstalowane pakiety:**
 - ✅ `build-essential` - GCC, G++, Make
@@ -461,11 +671,11 @@ ImportError: No module named 'setuptools'
 ```yaml
 - name: Install build dependencies
   run: |
-    python -m pip install --upgrade pip
-    pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest
+    python -m pip install --upgrade pip 
+    pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest pytest-cov
 ```
 
-**Status:** FIXED w Kroku 4
+**Status:** FIXED w Kroku 6
 
 **Zainstalowane pakiety:**
 - ✅ `numpy` - Bazowe tablice
@@ -477,6 +687,7 @@ ImportError: No module named 'setuptools'
 - ✅ `setuptools` - Tradycyjne narzędzie
 - ✅ `wheel` - Format pakietów
 - ✅ `pytest` - Framework testów
+- ✅ `pytest-cov` - Coverage reporting (nowy)
 
 ---
 
@@ -498,7 +709,7 @@ Brak kompilacji rozszerzeń C/C++
     pip install --verbose --no-build-isolation --editable .
 ```
 
-**Status:** FIXED w Kroku 5
+**Status:** FIXED w Kroku 7
 
 **Co to robi:**
 - ✅ Pobiera najnowszy kod scikit-learn
@@ -508,40 +719,102 @@ Brak kompilacji rozszerzeń C/C++
 
 ---
 
-### **Problem 5: Brak testów wydajnościowych**
+### **Problem 5: Brakujące testy wydajnościowe** FIXED
 
-**Plik:** `tests/performance/test.py` (pusty)
+**Plik:** `tests/performance/` - **ZAWIERA 5 TESTÓW**
 
 **Odpowiedzialność:** [Emilia Wierzbanowska](https://github.com/emiliaw1) (Performance QA)  
-**Stan:** AWAITING IMPLEMENTATION
 
-**Oczekiwane:**
-- 1-2 testy mierzące wydajność
-- Porównanie czasu wykonania na różnych rozmiarach danych
-- Logowanie wyników
-- Integracja z workflow (już gotowa w Kroku 6)
+**Stan:** IMPLEMENTACJA ZAKOŃCZONA
+
+**Zaimplementowane testy:**
+
+1. **`test_performance.py`** (3 testy):
+   - `test_fit_performance_small_dataset()` - Trening na 1000 próbkach
+   - `test_fit_performance_large_dataset()` - Trening na 50000 próbkach
+   - `test_performance_scaling()` - Porównanie scaling factor
+
+2. **`test_multiprocessing.py`** (1 test):
+   - `test_random_forest_parallelization()` - n_jobs=1 vs n_jobs=-1, duży zbiór 100K próbek
+
+3. **`test_sparse_performance.py`** (1 test):
+   - `test_sparse_performance()` - Dense vs Sparse matrices, SGDClassifier
+
+**Metryki mierzone:**
+- ✅ Czas treningu (time.perf_counter(), time.time())
+- ✅ Przyspieszenie równoległe (speedup factor)
+- ✅ Wydajność na macierzach rzadkich
+
+**Integracja z workflow:**
+- ✅ Testy uruchamiają się w Kroku 8 (pytest tests/)
+- ✅ Wyniki logują się do reports/test_report.log
+- ✅ Coverage mierzy się dla wszystkich testów
+- ✅ Artefakty uploadują się do GitHub (Kroki 11-13)
 
 ---
 
-### **Problem 6: Potencjalny timeout na build ze źródeł** SHOULD BE MONITORED
+### **Problem 6: Brak widoczności testów** FIXED
 
-**Objawy (mogą się pojawić):**
+**Objawy (z poprzedniej wersji):**
 ```
-The operation exceeded the time limit and timed out
-Compilation took too long (>1 hour)
+Testy się uruchomiły ale nie wiadomo ile i których
+Brak raportów w GitHub UI
 ```
 
-**Zalecenie:**
-- Monitorować czas buildowania
-- Jeśli >1h, zwiększyć timeout w workflow:
+**Rozwiązanie (teraz zaimplementowane):**
+- ✅ Markdown reports (`test_report_final.md`)
+- ✅ Coverage reports (HTML)
+- ✅ GitHub summary z 100 liniami output
+- ✅ Environment metadata
+- ✅ Multiple artefakty per version
+
+**Status:** FIXED - kompleksowe raportowanie
+
+---
+
+### **Problem 7: Brak pokrycia kodu** FIXED
+
+**Objawy (z poprzedniej wersji):**
+```
+Nie wiadomo jak dobre są testy
+Brak metryki coverage
+```
+
+**Rozwiązanie (teraz zaimplementowane):**
 ```yaml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120  # Zwiększ z 360 do 120 minut
+pytest tests/ \
+  --cov=sklearn \
+  --cov-report=html
 ```
 
-**Status:** 🟢 Nie występuje teraz, ale warto monitorować
+**Status:** FIXED - pytest-cov integracja
+
+**Wyniki:**
+- ✅ `htmlcov/index.html` - interaktywny report
+- ✅ Coverage % dla każdego modułu
+- ✅ Line-by-line coverage visualization
+
+---
+
+### **Problem 8: Workflow zawsze się powiedzie** FIXED
+
+**Objawy (z poprzedniej wersji):**
+```
+Testy mogą zawiać ale workflow shows ✅
+PR merguje się mimo błędów testów
+```
+
+**Rozwiązanie (teraz zaimplementowane):**
+
+```diff
+- pytest tests/functional --tb=short --verbose > test_results.txt 2>&1 || true
+- pytest tests/performance --tb=short --verbose >> test_results.txt 2>&1 || true
++ pytest tests/ --cov=sklearn --cov-report=html --disable-warnings -v -rA --maxfail=0 2>&1 | tee reports/test_report.log
+```
+
+**Usunięto `|| true`** - workflow zawiedzie jeśli testy zawiodą
+
+**Status:** FIXED - strict mode enabled
 
 ---
 
@@ -550,23 +823,25 @@ jobs:
 Gdy inżynierowie QA będą commitować PR-y z testami, sprawdzać:
 
 ### **Aspekt: Build & Zależności**
-- [ ] Czy workflow się pomyślnie uruchamia?
-- [ ] Czy build ze źródeł przechodzi?
-- [ ] Czy wszystkie kroki 1-5 działają bez błędów?
-- [ ] Czy testy przechodzą na Python 3.12?
-- [ ] Czy są kompatybilne z najnowszym scikit-learn z GitHub?
+- [ ] Czy workflow się pomyślnie uruchamia na **wszystkich 4 wersjach Pythona**?
+- [ ] Czy build ze źródeł przechodzi na każdej wersji?
+- [ ] Czy wszystkie kroki 1-7 działają bez błędów?
+- [ ] Czy coverage report jest generowany?
+- [ ] Czy environment.md zawiera poprawne dane?
 
 ### **Aspekt: Testowanie**
 - [ ] Czy zarówno functional i performance testy się uruchamiają?
-- [ ] Czy test_results.txt jest generowany?
-- [ ] Czy wyniki są widoczne w GitHub Summary (Krok 7)?
-- [ ] Czy plik jest uploadowany do artifacts (Krok 8)?
+- [ ] Czy `test_report_final.md` jest generowany?
+- [ ] Czy wyniki są widoczne w GitHub Summary (Krok 9)?
+- [ ] Czy artefakty są uploadowane (Krok 11-13)?
+- [ ] Czy coverage report pokazuje znaczące pokrycie?
 
 ### **Aspekt: Jakość testów**
 - [ ] Czy test ma jasne sekcje (Arrange-Act-Assert)?
 - [ ] Czy ma docstring wyjaśniający co testuje?
 - [ ] Czy assertion ma wiadomość o błędzie?
 - [ ] Czy test jest niezależny od innych testów?
+- [ ] Czy działa na wszystkich 4 wersjach Pythona?
 
 ### **Aspekt: Code Review**
 - [ ] Czy commit message jest jasny i opisowy?
@@ -575,23 +850,38 @@ Gdy inżynierowie QA będą commitować PR-y z testami, sprawdzać:
 - [ ] Czy PR description wyjaśnia co zmienia?
 - [ ] Czy są testy dla nowego kodu?
 - [ ] Czy kod jest sformatowany (PEP8)?
+- [ ] Czy testuje się na wszystkich wersjach Pythona?
 
 ### **Aspekt: Dokumentacja**
 - [ ] Czy test jest udokumentowany?
 - [ ] Czy jest opisane co się testuje i dlaczego?
 - [ ] Czy są skomentowane złożone sekcje?
 - [ ] Czy scenariusz testowy jest jasny?
+- [ ] Czy coverage jest wystarczający?
 
 ---
 
 ## Przeznaczenie Każdego Pliku Testów
+
+### **Testy Funkcjonalne**
 
 | Plik | Autor | Cel | Wymagania | Status |
 |------|-------|-----|----------|--------|
 | `test_classification.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Rzeczywisty use-case klasyfikacji | sklearn datasets, RandomForest | READY |
 | `test_pipeline.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Weryfikacja klasy Pipeline | sklearn preprocessing, SVC | READY |
 | `test_model_persistence.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Zapis/odczyt modelu | joblib, LogisticRegression | READY |
-| `test.py` (performance) | [Emilia](https://github.com/emiliaw1) (Performance QA) | Benchmarking wydajności | pomiary czasu, duże zbiory danych | AWAITING IMPLEMENTATION |
+| `test_clustering.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Testowanie KMeans | KMeans clustering | READY |
+| `test_regression.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Regresja + baseline | RandomForest, Linear, Dummy | READY |
+| `test_edge_cases.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Testy graniczne | Invalid inputs, edge cases | READY |
+| `test_pipeline_integration.py` | [Jakub](https://github.com/JakubBaczynskii) (ML QA) | Integracja end-to-end | Multi-step pipeline | READY |
+
+### **Testy Wydajnościowe**
+
+| Plik | Autor | Cel | Metryki | Status |
+|------|-------|-----|---------|--------|
+| `test_performance.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Scaling performance | Training time, scaling factor | DONE |
+| `test_multiprocessing.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Parallelization speedup | n_jobs effect, speedup factor | DONE |
+| `test_sparse_performance.py` | [Emilia](https://github.com/emiliaw1) (Performance QA) | Dense vs Sparse | Training time comparison | DONE |
 
 ---
 
@@ -601,17 +891,27 @@ Gdy inżynierowie QA będą commitować PR-y z testami, sprawdzać:
 OOBT_scikit-learn/
 ├── .github/
 │   └── workflows/
-│       └── OOBT_scikit-learn_workflow.yml      # ✅ Aktualny workflow
+│       └── OOBT_scikit-learn_workflow.yml      # ✅ Zaktualizowany workflow
 ├── docs/
 │   ├── scenariusze.md                          # Scenariusze testów akceptacyjnych
-│   ├── BUILD_DOCUMENTATION.md                  # Ten plik
+│   ├── BUILD_DOCUMENTATION.md                  # Ten plik (zaktualizowany)
 ├── tests/
 │   ├── functional/
 │   │   ├── test_classification.py              # READY
 │   │   ├── test_pipeline.py                    # READY
-│   │   └── test_model_persistence.py           # READY
+│   │   ├── test_model_persistence.py           # READY
+│   │   ├── test_clustering.py                  # READY
+│   │   ├── test_regression.py                  # READY
+│   │   ├── test_edge_cases.py                  # READY
+│   │   └── test_pipeline_integration.py        # READY
 │   └── performance/
-│       └── test.py                             # AWAITING IMPLEMENTATION
+│       ├── test_performance.py                 # DONE
+│       ├── test_multiprocessing.py             # DONE
+│       └── test_sparse_performance.py          # DONE
+├── reports/
+│   ├── test_report_final.md                    # Sformatowany Markdown report
+│   └── test_report.log                         # Raw pytest output
+├── htmlcov/                                    # Coverage HTML report (generated)
 ├── README.md                                   # Główna dokumentacja
 ├── requirements.txt                            # Zależności (scikit-learn, pytest)
 └── .gitignore
@@ -634,9 +934,9 @@ sudo apt-get install -y build-essential gfortran libopenblas-dev liblapack-dev
 python3 -m venv sklearn_env
 source sklearn_env/bin/activate
 
-# 4. Zainstaluj build tools
+# 4. Zainstaluj build tools (WITH COVERAGE)
 pip install --upgrade pip
-pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest
+pip install numpy scipy cython meson-python meson ninja setuptools wheel pytest pytest-cov
 
 # 5. Sbuduj scikit-learn ze źródeł
 git clone --depth 1 https://github.com/scikit-learn/scikit-learn.git
@@ -644,46 +944,62 @@ cd scikit-learn
 pip install --verbose --no-build-isolation --editable .
 cd ..
 
-# 6. Uruchom wszystkie testy
-pytest tests/ -v
+# 6. Uruchom wszystkie testy z coverage
+mkdir -p reports
+pytest tests/ \
+  --cov=sklearn \
+  --cov-report=html \
+  --disable-warnings \
+  -v \
+  -rA \
+  --maxfail=0 \
+  2>&1 | tee reports/test_report.log
 
 # 7. Uruchom konkretny test
 pytest tests/functional/test_classification.py -v
 
-# 8. Uruchom z raportowaniem
-pytest tests/ -v --tb=short --junit-xml=results.xml
+# 8. Pokaż HTML coverage report
+open htmlcov/index.html  # macOS
+# lub
+xdg-open htmlcov/index.html  # Linux
 
 # 9. Pokaż wyniki
-tail -n 20 results.xml
+cat reports/test_report.log
 ```
 
 ---
 
-## Zadania dla [Mykoli](https://github.com/MykMash) (Technical Writer) - Task 1
+## Zadania dla [Mykoli](https://github.com/MykMash) (Technical Writer)
 
 ### **Task 1.1: Monitoring Pipeline DevOps** ✅
 - [x] Obserwować workflow przy każdym push/PR
 - [x] Zapisywać jakie błędy się pojawiają
 - [x] Notować czasy budowania
-- [ ] Kontynuować dokumentowanie nowych problemów
+- [x] Dokument zaktualizowany - wszystkie kroki udokumentowane
 
 ### **Task 1.2: Dokumentacja Procesu Budowania** ✅
 - [x] Przygotować listę zależności systemowych
-- [x] Dokumentować każdy krok budowania
+- [x] Dokumentować każdy krok budowania (14 kroków)
 - [x] Wyjaśnić zależności dla każdego testu
 - [x] Stwórzyć Quick Start
-- [ ] Stwórzyć przewodnik troubleshootingu dla common issues
+- [x] Udokumentować zmiany w workflowie (matrix testing, coverage, etc.)
 
 ### **Task 1.3: Standardy Code Review** ✅
 - [x] Stwórzyć checklist dla recenzentów
-- [ ] Dokumentować dobre i złe praktyki z PR-ów (realtime)
-- [ ] Ustandaryzować commit messages (prowadź log)
-- [ ] Prowadźić log decyzji code review
+- [x] Dokumentować wymagania dla testów na 4 wersjach Pythona
+- [x] Ustandaryzować commit messages
+- [x] Dokumentacja zmian i ich znaczenia
 
-### **Task 1.4: Dokumentacja Błędów Budowania** ⏳
-- [ ] Aktualizować `docs/BUILD_ISSUES_LOG.md` na bieżąco
-- [ ] Logować każdy nowy problem z datą i rozwiązaniem
-- [ ] Oznaczać Status: ✅ Naprawione, 🟠 Do naprawy, ⏳ Monitoring
+### **Task 1.4: Dokumentacja Błędów Budowania** ✅
+- [x] Udokumentować wszystkie naprawione problemy
+- [x] Dodać Problem 8 (workflow zawsze się powiedzie - FIXED)
+- [x] Oznaczyć Status dla każdego problemu
+
+### **Task 1.5: Aktualizacja Testów Wydajnościowych** ✅
+- [x] Zaktualizować tabelę testów funkcjonalnych (7 testów)
+- [x] Zaktualizować tabelę testów wydajnościowych (5 testów)
+- [x] Oznaczyć Problem 5 jako FIXED
+- [x] Dodać szczegóły implementacji wydajności
 
 ---
 
@@ -695,64 +1011,74 @@ tail -n 20 results.xml
 | 2 | System deps | CRITICAL | FIXED | ✅ |
 | 3 | Build tools | CRITICAL | FIXED | ✅ |
 | 4 | Build source | CRITICAL | FIXED | ✅ |
-| 5 | Performance testy | AWAITING | AWAITING | - |
+| 5 | Performance testy | AWAITING | FIXED  | ✅ |
 | 6 | Timeout build | OPTIONAL | MONITORING | - |
+| 7 | Brak pokrycia | CRITICAL | FIXED | ✅ |
+| 8 | Workflow zawsze OK | CRITICAL | FIXED | ✅ |
 
 ---
 
 ## Kolejne Kroki
 
-### **Milestone 2 (Teraz - Do 2026-05-08)**
-1. ✅ Monitorować workflow - szukaj błędów
-2. ✅ [Emilia](https://github.com/emiliaw1) implementuje testy wydajnościowe
-3. ✅ Cały zespół testuje lokalnie
-4. ✅ Obserwować ci-ple i dokumentuj problemy
+### **Milestone 2 (Teraz - Do 2026-05-21)** COMPLETE
+1. ✅ Workflow zaktualizowany - matrix testing na 4 wersjach Pythona
+2. ✅ Coverage reporting włączony
+3. ✅ Dokumentacja pełna - 13 kroków szczegółowo opisanych
+4. ✅ Strict mode - workflow zawiedzie jeśli testy zawiodą
+5. ✅ Testy wydajnościowe zaimplementowane (5 testów)
 
-### **Milestone 3 (2026-05-08 - 2026-05-29)**
-1. ✅ Usuńąć `|| true` z testów (strict mode)
-2. ✅ Dodać JUnit XML reporting
-3. ✅ Implementować multi-version Python testing
-4. ✅ Optymizować czas buildowania
+### **Milestone 3 (2026-05-21 - 2026-05-29)** 🟢 IN PROGRESS
+1. ✅ Emilia implementuje testy wydajnościowe - DONE
+2. ⏳ Monitorować workflow - szukaj błędów na różnych wersjach Pythona
+3. ⏳ Optymizować czas buildowania
+4. ⏳ Obserwować ci-pipeline i dokumentować problemy
 
 ### **Milestone 4 (Release)**
-1. ✅ Finalizować dokumentację
-2. ✅ Zweryfikować wszystkie testy działają
-4. ✅ Przygotować release notes
-5. ✅ Archiwizować wyniki testów
+1. ⏳ Finalizować dokumentację
+2. ⏳ Zweryfikować wszystkie testy działają na Python 3.11, 3.12, 3.13, 3.14
+3. ⏳ Przygotować release notes
+4. ⏳ Archiwizować wyniki testów i coverage reports
 
 ---
 
-## Kluczowe Elementy Obecnego Workflow
+## Kluczowe Elementy Bieżącego Workflow
 
-### **Kroki 1-2: Przygotowanie**
+### **Kroki 1-3: Przygotowanie**
 - ✅ Checkout kodu (v4)
-- ✅ Setup Python 3.12 (poprawnie)
+- ✅ Setup Python (matrix - 4 wersje)
+- ✅ Environment variables + metadata collection
 
-### **Kroki 3-4: Zależności**
+### **Kroki 4-6: Zależności**
+- ✅ Display environment information
 - ✅ System dependencies (complete)
-- ✅ Build tools (complete)
+- ✅ Build tools (complete + pytest-cov)
 
-### **Krok 5: Budowanie**
+### **Krok 7: Budowanie**
 - ✅ Build scikit-learn ze źródeł
 - ✅ Kompilacja C/C++/Cython
 - ✅ Meson build system
 
-### **Krok 6: Testowanie**
-- ✅ Functional tests ([Jakub](https://github.com/JakubBaczynskii) - gotowe)
-- ⏳ Performance tests ([Emilia](https://github.com/emiliaw1) - czeka)
+### **Krok 8: Testowanie (EXPANDED)**
+- ✅ Functional tests (7 testów - [Jakub](https://github.com/JakubBaczynskii) - DONE)
+- ✅ Performance tests (5 testów - [Emilia](https://github.com/emiliaw1) - DONE)
+- ✅ Coverage reporting (htmlcov/)
+- ✅ Structured markdown reports
 
-### **Kroki 7-8: Raportowanie**
-- ✅ Display wyników (GitHub UI)
-- ✅ Upload artifacts (7 dni storage)
+### **Kroki 9-13: Raportowanie (EXPANDED)**
+- ✅ Display wyników (GitHub UI - 100 linii)
+- ✅ Generate markdown summary (comprehensive)
+- ✅ Upload test reports (per-version)
+- ✅ Upload coverage reports (per-version)
+- ✅ Upload environment info (per-version)
 
 ---
 
-**Dokument zaktualizowany:** 2026-04-30  
-**Ostatnia aktualizacja:** Dopasowanie do aktualnego workflow  
-**Status:** Aktualizowany i poprawiony  
+**Dokument zaktualizowany:** 2026-05-21 (Update 2)  
+**Ostatnia aktualizacja:** Aktualizacja tabel testów wydajnościowych i Problem 5  
+**Status:** Complete - Testy wydajnościowe zaktualizowane i udokumentowane  
 **Autor:** [Mykola Mashovets](https://github.com/MykMash)  
-**Wersja:** 1.0
+**Wersja:** 2.1 (Performance Tests Implementation Complete)
 
 **Dokument stworzony:** 2026-04-30  
-**Status:** Draft (do review z DevOps - [Adam](https://github.com/Adamono))  
-**Ostatnia aktualizacja:** 2026-04-30
+**Ostatnia zmiana:** 2026-05-21  
+**Status:** Production-ready - Gotowy do implementacji
